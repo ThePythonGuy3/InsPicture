@@ -1,0 +1,23 @@
+<component name="libraryTable">
+  <library name="commons-io-2.16.1-javadoc">
+    <ANNOTATIONS>
+      <root url="jar://$PROJECT_DIR$/lib/commons-io-2.16.1-javadoc.jar!/" />
+    </ANNOTATIONS>
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/commons-io-2.16.1-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/commons-io-2.16.1-javadoc.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/lib/commons-io-2.16.1-javadoc.jar!/" />
+    </JAVADOC>
+    <NATIVE>
+      <root url="jar://$PROJECT_DIR$/lib/commons-io-2.16.1-javadoc.jar!/" />
+    </NATIVE>
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/commons-io-2.16.1-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/commons-io-2.16.1-javadoc.jar!/" />
+    </SOURCES>
+    <jarDirectory url="jar://$PROJECT_DIR$/lib/commons-io-2.16.1-javadoc.jar!/" recursive="false" />
+    <jarDirectory url="jar://$PROJECT_DIR$/lib/commons-io-2.16.1-javadoc.jar!/" recursive="false" type="SOURCES" />
+  </library>
+</component>

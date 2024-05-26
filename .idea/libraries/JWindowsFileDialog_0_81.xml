@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="JWindowsFileDialog-0.81">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/JWindowsFileDialog-0.81.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
