@@ -1,0 +1,74 @@
+<project name="InsPicture" default="dist" basedir=".">
+    <property name="src" location="src"/>
+    <property name="build" location="build"/>
+    <property name="dist" location="dist"/>
+    <property name="lib" location="lib"/>
+    <property name="resources" location="resources"/>
+
+    <path id="class.path">
+        <fileset dir="${lib}" includes="*.jar"/>
+    </path>
+
+    <target name="init">
+        <tstamp/>
+        <mkdir dir="${build}"/>
+        <mkdir dir="${dist}"/>
+    </target>
+
+    <target name="compile" depends="init"
+            description="Compile InsPicture into classes.">
+        <!-- NOTE debug info might not be necessary on release -->
+        <javac srcdir="${src}" source="21" target="21" classpathref="class.path" debug="true"
+               debuglevel="lines,vars,source" destdir="${build}"
+               includeantruntime="false"/>
+    </target>
+
+    <target name="dist" depends="compile"
+            description="Generate a .jar distribution file of InsPicture.">
+        <pathconvert property="classpath.property" refid="class.path" pathsep=" ">
+            <map from="${basedir}/" to=""/>
+        </pathconvert>
+
+        <jar jarfile="${dist}/InsPicture.jar" basedir="${build}">
+            <manifest>
+                <attribute name="Class-Path" value="${classpath.property}"/>
+                <attribute name="Main-Class" value="app.Application"/>
+            </manifest>
+        </jar>
+
+        <copy todir="${dist}/lib">
+            <fileset dir="${lib}" includes="**"/>
+        </copy>
+
+        <copy todir="${dist}/resources">
+            <fileset dir="${resources}" includes="**"/>
+        </copy>
+    </target>
+
+    <target name="run"
+            description="Run InsPicture from the dist/ directory.">
+        <java jar="./dist/InsPicture.jar" classpath="class.path" fork="true"/>
+    </target>
+
+    <target name="r"
+            description="'run' alias.">
+        <antcall target="run"/>
+    </target>
+
+    <target name="full"
+            description="Build and run.">
+        <antcall target="dist"/>
+        <antcall target="run"/>
+    </target>
+
+    <target name="f"
+            description="'full' alias.">
+        <antcall target="full"/>
+    </target>
+
+    <target name="clean"
+            description="Remove all compilation files.">
+        <delete dir="${build}"/>
+        <delete dir="${dist}"/>
+    </target>
+</project>

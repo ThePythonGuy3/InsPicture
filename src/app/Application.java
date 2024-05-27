@@ -1,3 +1,5 @@
+package app;
+
 import com.github.jacksonbrienen.jwfd.JWindowsFileDialog;
 import components.*;
 import dialogs.ConfigureExtensionsDialog;
@@ -15,7 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 
-public class Main
+public class Application
 {
     public static JFrame mainFrame;
     public static ReviewImageElement reviewImageElement;
