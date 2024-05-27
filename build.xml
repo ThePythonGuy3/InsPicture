@@ -43,6 +43,10 @@
         <copy todir="${dist}/resources">
             <fileset dir="${resources}" includes="**"/>
         </copy>
+
+        <copy todir="${dist}">
+            <fileset dir="." includes="LICENSE"/>
+        </copy>
     </target>
 
     <target name="run"
