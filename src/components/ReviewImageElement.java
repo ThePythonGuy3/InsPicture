@@ -25,6 +25,8 @@ public class ReviewImageElement extends JLabel
 
         setHorizontalAlignment(SwingConstants.CENTER);
         setText("No image selected or image can't be displayed.");
+
+        setFocusable(false);
     }
 
     public void SetImage(BufferedImage image)

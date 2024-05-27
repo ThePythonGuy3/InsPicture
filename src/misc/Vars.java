@@ -1,24 +1,22 @@
 package misc;
 
-import org.apache.commons.io.FilenameUtils;
+import com.github.jacksonbrienen.jwfd.FileExtension;
+import org.apache.commons.io.*;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.awt.image.*;
-import java.io.*;
+import java.io.File;
 import java.nio.file.*;
 import java.util.*;
-import java.util.List;
 import java.util.stream.Stream;
-
-import static misc.Utils.*;
 
 public class Vars
 {
     public static final Image appIcon;
     public static final ArrayList<Image> appIcons;
     public static final String[] displayableExtensions = {"jpg", "jpeg", "png", "gif", "bmp"};
+    public static final FileExtension saveExtension = new FileExtension("InsPicture save files", "inspicture");
     public static final int buttonsDownMask = MouseEvent.BUTTON1_DOWN_MASK | MouseEvent.BUTTON2_DOWN_MASK | MouseEvent.BUTTON3_DOWN_MASK;
     public static final String fileSeparator = FileSystems.getDefault().getSeparator();
     private static final String[] extraExtensions = {"crw", "cr2", "cr3"};

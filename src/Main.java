@@ -1,8 +1,8 @@
-import com.github.jacksonbrienen.jwfd.JWindowsFileDialog;
+import com.github.jacksonbrienen.jwfd.*;
 import components.*;
 import dialogs.ConfigureExtensionsDialog;
 import misc.*;
-import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.*;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -10,11 +10,10 @@ import javax.swing.border.LineBorder;
 import javax.swing.plaf.ColorUIResource;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.AbstractMultiResolutionImage;
-import java.io.File;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class Main
 {
@@ -23,7 +22,7 @@ public class Main
     public static JLabel zoomRectSliderTitle, zoomAmountSliderTitle, labelsTitle, currentImageLabel, currentLabelLabel;
     public static JSlider zoomRectSlider, zoomAmountSlider;
     public static JPanel labelsPanel;
-    public static JButton addLabelButton, previousImageButton, nextImageButton, directoryButton, setExtensionsButton, startButton, pauseButton, stopButton, exportButton;
+    public static JButton addLabelButton, previousImageButton, nextImageButton, directoryButton, setExtensionsButton, saveButton, loadButton, startButton, pauseButton, stopButton, exportButton;
     public static JScrollPane labelsScrollPane;
     private static File directory;
     private static ArrayList<FileGroup> files;
@@ -73,7 +72,7 @@ public class Main
         constraints.insets = new Insets(10, 10, 10, 10);
         constraints.gridx = 0;
         constraints.gridy = 0;
-        constraints.gridheight = 9;
+        constraints.gridheight = 10;
         constraints.fill = GridBagConstraints.BOTH;
         constraints.weightx = 10.0;
         constraints.weighty = 1.0;
@@ -225,21 +224,13 @@ public class Main
         // Add Label Button
         addLabelButton = new JButton("+");
 
-        addLabelButton.addMouseListener(new MouseAdapter()
-        {
-            @Override
-            public void mousePressed(MouseEvent e)
-            {
-                if (addLabelButton.isEnabled())
-                {
-                    LabelElement labelElement = new LabelElement();
-                    labelElement.AllowDelete(mode == Mode.NOMODE);
+        addLabelButton.addActionListener(e -> {
+            LabelElement labelElement = new LabelElement();
+            labelElement.AllowDelete(mode == Mode.NOMODE);
 
-                    labelsPanel.add(labelElement);
-                    labelsPanel.revalidate();
-                    labelsPanel.repaint();
-                }
-            }
+            labelsPanel.add(labelElement);
+            labelsPanel.revalidate();
+            labelsPanel.repaint();
         });
 
         constraints.gridy = 6;
@@ -289,6 +280,61 @@ public class Main
         mainFrame.add(navigationPanel, constraints);
         // --
 
+        // Save/Load Panel + Buttons
+        JPanel saveLoadPanel = new JPanel();
+
+        saveLoadPanel.setLayout(new GridBagLayout());
+
+        GridBagConstraints saveLoadPanelConstraints = new GridBagConstraints();
+
+        saveButton = new JButton("Save");
+
+        saveButton.addActionListener(e -> {
+            String selection = JWindowsFileDialog.showSaveDialog(mainFrame, "InsPicture - Select Directory", Vars.saveExtension);
+
+            if (selection != null)
+            {
+                String output = GenerateSaveFile();
+
+                PrintWriter writer = null;
+                try
+                {
+                    writer = new PrintWriter(selection, StandardCharsets.UTF_8);
+                    writer.print(output);
+                    writer.close();
+                } catch (Exception ignored)
+                {
+                }
+            }
+        });
+
+        loadButton = new JButton("Load");
+
+        loadButton.addActionListener(e -> {
+            String selection = JWindowsFileDialog.showOpenDialog(mainFrame, "InsPicture - Select Directory", Vars.saveExtension);
+
+            if (selection != null)
+            {
+                try
+                {
+                    LoadSaveFile(FileUtils.readFileToString(new File(selection), StandardCharsets.UTF_8));
+                } catch (Exception ignored)
+                {
+                }
+            }
+        });
+
+        saveLoadPanelConstraints.weightx = 1.0;
+        saveLoadPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
+        saveLoadPanel.add(saveButton, saveLoadPanelConstraints);
+
+        saveLoadPanelConstraints.gridx = 1;
+        saveLoadPanel.add(loadButton, saveLoadPanelConstraints);
+
+        constraints.gridy = 8;
+        mainFrame.add(saveLoadPanel, constraints);
+        // --
+
         // Set Extensions Button
         setExtensionsButton = new JButton("Configure Extensions");
 
@@ -296,7 +342,7 @@ public class Main
             new ConfigureExtensionsDialog(mainFrame);
         });
 
-        constraints.gridy = 8;
+        constraints.gridy = 9;
         mainFrame.add(setExtensionsButton, constraints);
         // --
 
@@ -311,7 +357,7 @@ public class Main
         });
 
         constraints.gridx = 0;
-        constraints.gridy = 9;
+        constraints.gridy = 10;
         constraints.anchor = GridBagConstraints.WEST;
         constraints.fill = GridBagConstraints.HORIZONTAL;
         constraints.weightx = 10.0;
@@ -373,13 +419,10 @@ public class Main
 
                     if (targetFile.isDirectory() && (targetFile.list() == null || targetFile.list().length == 0))
                     {
-                        for (Component component : labelsPanel.getComponents())
+                        for (LabelElement labelElement : GetLabelElements())
                         {
-                            if (component instanceof LabelElement labelElement)
-                            {
-                                File newDir = new File(targetFile, labelElement.GetLabel());
-                                newDir.mkdirs();
-                            }
+                            File newDir = new File(targetFile, labelElement.GetLabel());
+                            newDir.mkdirs();
                         }
 
                         File unlabeledDir = new File(targetFile, "Unlabeled");
@@ -439,11 +482,11 @@ public class Main
         Toolkit.getDefaultToolkit().addAWTEventListener(event -> {
             KeyEvent e = (KeyEvent) event;
 
-            if (mainFrame.hasFocus() && mode == Mode.STARTED && !(event.getSource() instanceof JTextField) && !(event.getSource() instanceof JButton && e.getKeyCode() == KeyEvent.VK_ENTER) && !(event.getSource() instanceof JSlider && (e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_RIGHT)) && e.getID() == KeyEvent.KEY_PRESSED)
+            if (mainFrame.hasFocus() && mode == Mode.STARTED && e.getID() == KeyEvent.KEY_PRESSED)
             {
-                for (Component component : labelsPanel.getComponents())
+                for (LabelElement labelElement : GetLabelElements())
                 {
-                    if (component instanceof LabelElement labelElement && e.getKeyCode() == labelElement.GetKeyCode())
+                    if (e.getKeyCode() == labelElement.GetKeyCode())
                     {
                         files.get(currentImage - 1).SetLabel(labelElement.GetLabel());
 
@@ -475,6 +518,8 @@ public class Main
             }
         });
 
+        reviewImageElement.setFocusable(false);
+
         mainFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         mainFrame.setVisible(true);
     }
@@ -487,74 +532,127 @@ public class Main
         {
             case NOMODE ->
             {
+                zoomRectSlider.setFocusable(true);
+                zoomAmountSlider.setFocusable(true);
+                labelsScrollPane.setFocusable(true);
+
                 previousImageButton.setEnabled(false);
+                previousImageButton.setFocusable(true);
                 nextImageButton.setEnabled(false);
+                nextImageButton.setFocusable(true);
+
+                saveButton.setEnabled(false);
+                saveButton.setFocusable(true);
+                loadButton.setEnabled(true);
+                loadButton.setFocusable(true);
 
                 setExtensionsButton.setEnabled(true);
+                setExtensionsButton.setFocusable(true);
 
                 startButton.setEnabled(true);
+                startButton.setFocusable(true);
                 pauseButton.setEnabled(false);
+                pauseButton.setFocusable(true);
                 stopButton.setEnabled(false);
+                stopButton.setFocusable(true);
                 exportButton.setEnabled(false);
+                exportButton.setFocusable(true);
 
                 directoryButton.setEnabled(true);
+                directoryButton.setFocusable(true);
                 addLabelButton.setEnabled(true);
+                addLabelButton.setFocusable(true);
 
-                for (Component component : labelsPanel.getComponents())
-                    if (component instanceof LabelElement labelElement)
-                    {
-                        labelElement.AllowDelete(true);
-                        labelElement.AllowEdit(true);
-                        labelElement.AllowKey(true);
-                    }
+                for (LabelElement labelElement : GetLabelElements())
+                {
+                    labelElement.AllowDelete(true);
+                    labelElement.AllowEdit(true);
+                    labelElement.AllowKey(true);
+                }
             }
 
             case STARTED ->
             {
+                zoomRectSlider.setFocusable(false);
+                zoomAmountSlider.setFocusable(false);
+                labelsScrollPane.setFocusable(false);
+
                 previousImageButton.setEnabled(true);
+                previousImageButton.setFocusable(false);
                 nextImageButton.setEnabled(true);
+                nextImageButton.setFocusable(false);
+
+                saveButton.setEnabled(false);
+                saveButton.setFocusable(false);
+                loadButton.setEnabled(false);
+                loadButton.setFocusable(false);
 
                 setExtensionsButton.setEnabled(false);
+                setExtensionsButton.setFocusable(false);
 
                 startButton.setEnabled(false);
+                startButton.setFocusable(false);
                 pauseButton.setEnabled(true);
+                pauseButton.setFocusable(false);
                 stopButton.setEnabled(true);
+                stopButton.setFocusable(false);
                 exportButton.setEnabled(true);
+                exportButton.setFocusable(false);
 
                 directoryButton.setEnabled(false);
+                directoryButton.setFocusable(false);
                 addLabelButton.setEnabled(false);
+                addLabelButton.setFocusable(false);
 
-                for (Component component : labelsPanel.getComponents())
-                    if (component instanceof LabelElement labelElement)
-                    {
-                        labelElement.AllowDelete(false);
-                        labelElement.AllowEdit(false);
-                        labelElement.AllowKey(false);
-                    }
+                for (LabelElement labelElement : GetLabelElements())
+                {
+                    labelElement.AllowDelete(false);
+                    labelElement.AllowEdit(false);
+                    labelElement.AllowKey(false);
+                }
+
+                mainFrame.requestFocus();
             }
 
             case PAUSED ->
             {
+                zoomRectSlider.setFocusable(true);
+                zoomAmountSlider.setFocusable(true);
+                labelsScrollPane.setFocusable(true);
+
                 previousImageButton.setEnabled(true);
+                previousImageButton.setFocusable(true);
                 nextImageButton.setEnabled(true);
+                nextImageButton.setFocusable(true);
+
+                saveButton.setEnabled(true);
+                saveButton.setFocusable(true);
+                loadButton.setEnabled(false);
+                loadButton.setFocusable(true);
 
                 setExtensionsButton.setEnabled(false);
+                setExtensionsButton.setFocusable(true);
 
                 startButton.setEnabled(false);
+                startButton.setFocusable(true);
                 pauseButton.setEnabled(true);
+                pauseButton.setFocusable(true);
                 stopButton.setEnabled(true);
+                stopButton.setFocusable(true);
                 exportButton.setEnabled(true);
+                exportButton.setFocusable(true);
 
                 directoryButton.setEnabled(false);
+                directoryButton.setFocusable(true);
                 addLabelButton.setEnabled(true);
+                addLabelButton.setFocusable(true);
 
-                for (Component component : labelsPanel.getComponents())
-                    if (component instanceof LabelElement labelElement)
-                    {
-                        labelElement.AllowDelete(false);
-                        labelElement.AllowEdit(false);
-                        labelElement.AllowKey(true);
-                    }
+                for (LabelElement labelElement : GetLabelElements())
+                {
+                    labelElement.AllowDelete(false);
+                    labelElement.AllowEdit(false);
+                    labelElement.AllowKey(true);
+                }
             }
         }
     }
@@ -564,8 +662,9 @@ public class Main
         if (currentImage < files.size())
         {
             currentImage++;
-            SetImage();
         }
+
+        SetImage();
     }
 
     public static void SetDirectory(String directoryString)
@@ -596,24 +695,158 @@ public class Main
                 {
                 }
             }
-
-            currentLabelLabel.setText("Label: " + (fileGroup.GetLabel() == null ? "NONE" : fileGroup.GetLabel()));
         }
+
+        UpdateUI();
     }
 
     public static void UpdateFiles()
     {
         if (files != null && !files.isEmpty())
         {
-            if (currentImage > files.size())
-                currentImage = files.size();
-
             currentImageLabel.setText(currentImage + "/" + files.size());
         }
         else
         {
             currentImage = 0;
             currentImageLabel.setText("0/0");
+        }
+    }
+
+    public static ArrayList<LabelElement> GetLabelElements()
+    {
+        ArrayList<LabelElement> labelElements = new ArrayList<>();
+
+        for (Component component : labelsPanel.getComponents())
+            if (component instanceof LabelElement labelElement)
+                labelElements.add(labelElement);
+
+        return labelElements;
+    }
+
+    public static String GenerateSaveFile()
+    {
+        StringBuilder output = new StringBuilder();
+
+        output.append(directory.toString());
+        output.append("\n");
+        output.append(currentImage);
+        output.append("\n");
+
+        ArrayList<LabelElement> labelElements = GetLabelElements();
+
+        output.append(labelElements.size());
+        output.append("\n");
+
+        for (LabelElement labelElement : labelElements)
+        {
+            output.append(labelElement.GetLabel());
+            output.append("\n");
+            output.append(labelElement.GetKeyCode());
+            output.append("\n");
+        }
+
+        output.append(files.size());
+        output.append("\n");
+
+        for (FileGroup fileGroup : files)
+        {
+            output.append(fileGroup.GetName());
+            output.append("\n");
+            output.append(String.join(",", Arrays.stream(fileGroup.GetFiles()).map(File::toString).toList().toArray(new String[0])));
+            output.append("\n");
+            output.append(fileGroup.GetLabel());
+            output.append("\n");
+        }
+
+        output.append(output.toString().hashCode());
+
+        return output.toString();
+    }
+
+    public static void LoadSaveFile(String contents)
+    {
+        boolean error = false;
+
+        try
+        {
+            String[] contentArray = contents.split("\n");
+            int hashCode = Integer.parseInt(contentArray[contentArray.length - 1]);
+
+            String checkText = String.join("\n", Arrays.copyOfRange(contentArray, 0, contentArray.length - 1)) + "\n";
+
+            if (checkText.hashCode() == hashCode)
+            {
+                SetDirectory(contentArray[0]);
+                currentImage = Integer.parseInt(contentArray[1]);
+
+                ArrayList<LabelElement> loadedLabelElements = new ArrayList<>();
+                int labelCount = Integer.parseInt(contentArray[2]);
+                int currentId = 3;
+                for (int i = 0; i < labelCount; i++)
+                {
+                    LabelElement labelElement = new LabelElement(contentArray[currentId]);
+
+                    int keyCode = Integer.parseInt(contentArray[currentId + 1]);
+                    if (keyCode != -1) labelElement.SetKeyCode(keyCode);
+
+                    loadedLabelElements.add(labelElement);
+                    currentId += 2;
+                }
+
+                ArrayList<FileGroup> loadedFiles = new ArrayList<>();
+                int fileCount = Integer.parseInt(contentArray[currentId]);
+                currentId++;
+                for (int i = 0; i < fileCount; i++)
+                {
+                    FileGroup fileGroup = new FileGroup(contentArray[currentId]);
+                    fileGroup.SetLabel(contentArray[currentId + 2].equals("null") ? null : contentArray[currentId + 2]);
+
+                    String[] fileGroupFiles = contentArray[currentId + 1].split(",");
+                    for (String fileGroupFile : fileGroupFiles)
+                    {
+                        fileGroup.AddFile(new File(fileGroupFile));
+                    }
+
+                    loadedFiles.add(fileGroup);
+
+                    currentId += 3;
+                }
+
+                labelsPanel.removeAll();
+
+                for (LabelElement labelElement : loadedLabelElements)
+                {
+                    labelsPanel.add(labelElement);
+                }
+
+                files = loadedFiles;
+
+                UpdateMode(Mode.STARTED);
+                SetImage();
+            } else {
+                error = true;
+            }
+        } catch (Exception e)
+        {
+            error = true;
+        }
+
+        if (error)
+        {
+            JOptionPane.showMessageDialog(mainFrame, "The file provided is not valid.", "InsPicture - Load Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public static void UpdateUI()
+    {
+        if (files != null)
+        {
+            FileGroup fileGroup = files.get(currentImage - 1);
+
+            currentLabelLabel.setText("Label: " + (fileGroup.GetLabel() == null ? "NONE" : fileGroup.GetLabel()));
+        } else {
+            currentLabelLabel.setText("Label: NONE");
         }
     }
 

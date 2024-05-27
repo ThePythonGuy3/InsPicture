@@ -88,6 +88,12 @@ public class LabelElement extends JComponent
         SetKeyCode(keyCode);
     }
 
+    public LabelElement(String label)
+    {
+        this();
+        nameField.setText(label);
+    }
+
     public void SetKeyCode(int keyCode)
     {
         this.keyCode = keyCode;
@@ -97,6 +103,11 @@ public class LabelElement extends JComponent
     public int GetKeyCode()
     {
         return keyCode;
+    }
+
+    public void SetLabel(String label)
+    {
+        nameField.setText(label);
     }
 
     public String GetLabel()
@@ -111,6 +122,7 @@ public class LabelElement extends JComponent
 
     public void AllowEdit(boolean allow)
     {
+        nameField.setEnabled(allow);
         nameField.setEditable(allow);
     }
 
