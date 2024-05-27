@@ -524,6 +524,11 @@ public class Application
 
         mainFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         mainFrame.setVisible(true);
+
+        if (args.length > 0)
+        {
+            LoadSaveFile(args[0]);
+        }
     }
 
     public static void UpdateMode(Mode modeIn)
