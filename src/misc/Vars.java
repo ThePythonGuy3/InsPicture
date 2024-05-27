@@ -1,16 +1,23 @@
 package misc;
 
+import org.apache.commons.io.FilenameUtils;
+
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.io.File;
-import java.nio.file.FileSystems;
+import java.awt.image.*;
+import java.io.*;
+import java.nio.file.*;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Stream;
+
+import static misc.Utils.*;
 
 public class Vars
 {
     public static final Image appIcon;
+    public static final ArrayList<Image> appIcons;
     public static final String[] displayableExtensions = {"jpg", "jpeg", "png", "gif", "bmp"};
     public static final int buttonsDownMask = MouseEvent.BUTTON1_DOWN_MASK | MouseEvent.BUTTON2_DOWN_MASK | MouseEvent.BUTTON3_DOWN_MASK;
     public static final String fileSeparator = FileSystems.getDefault().getSeparator();
@@ -21,14 +28,36 @@ public class Vars
     {
         Image appIcon_ = null;
 
+        ArrayList<Image> images = new ArrayList<>();
+
         try
         {
             appIcon_ = ImageIO.read(new File("./resources/icon.png"));
+
+            try (Stream<Path> stream = Files.walk(new File("./resources/iconRes/").toPath()))
+            {
+                stream.filter(e ->
+                        Files.exists(e)
+                                && Files.isRegularFile(e)
+                                && FilenameUtils.getExtension(e.toString()).equals("png")
+                                && FilenameUtils.getName(e.toString()).startsWith("icon")
+                ).forEach(e -> {
+                    File file = e.toFile();
+                    try
+                    {
+                        Image image = ImageIO.read(file);
+                        images.add(image);
+                    } catch (Exception ignored)
+                    {
+                    }
+                });
+            }
         } catch (Exception ignored)
         {
         }
 
         appIcon = appIcon_;
+        appIcons = images;
     }
 
     static

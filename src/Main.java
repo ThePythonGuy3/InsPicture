@@ -10,9 +10,11 @@ import javax.swing.border.LineBorder;
 import javax.swing.plaf.ColorUIResource;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.AbstractMultiResolutionImage;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Main
 {
@@ -43,7 +45,7 @@ public class Main
 
         mainFrame = new JFrame();
         mainFrame.setTitle("InsPicture - Picture Inspector");
-        mainFrame.setIconImage(Vars.appIcon);
+        mainFrame.setIconImages(Vars.appIcons);
 
         mainFrame.setLayout(new GridBagLayout());
 
