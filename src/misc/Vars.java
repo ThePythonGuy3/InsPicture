@@ -1,7 +1,7 @@
 package misc;
 
 import com.github.jacksonbrienen.jwfd.FileExtension;
-import org.apache.commons.io.*;
+import org.apache.commons.io.FilenameUtils;
 
 import javax.imageio.ImageIO;
 import java.awt.*;

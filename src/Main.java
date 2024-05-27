@@ -1,4 +1,4 @@
-import com.github.jacksonbrienen.jwfd.*;
+import com.github.jacksonbrienen.jwfd.JWindowsFileDialog;
 import components.*;
 import dialogs.ConfigureExtensionsDialog;
 import misc.*;
@@ -824,7 +824,9 @@ public class Main
 
                 UpdateMode(Mode.STARTED);
                 SetImage();
-            } else {
+            }
+            else
+            {
                 error = true;
             }
         } catch (Exception e)
@@ -845,7 +847,9 @@ public class Main
             FileGroup fileGroup = files.get(currentImage - 1);
 
             currentLabelLabel.setText("Label: " + (fileGroup.GetLabel() == null ? "NONE" : fileGroup.GetLabel()));
-        } else {
+        }
+        else
+        {
             currentLabelLabel.setText("Label: NONE");
         }
     }
