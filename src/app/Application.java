@@ -2,7 +2,7 @@ package app;
 
 import com.github.jacksonbrienen.jwfd.JWindowsFileDialog;
 import components.*;
-import dialogs.ConfigureExtensionsDialog;
+import dialogs.*;
 import misc.*;
 import org.apache.commons.io.*;
 
@@ -30,6 +30,8 @@ public class Application
     private static ArrayList<FileGroup> files;
     private static Mode mode = Mode.NOMODE;
     private static int currentImage = 0;
+    private static ProgressDialog progressDialog;
+    private static boolean stop = false;
 
     public static void main(String[] args) throws UnsupportedLookAndFeelException, ClassNotFoundException, InstantiationException, IllegalAccessException
     {
@@ -47,6 +49,11 @@ public class Application
         mainFrame = new JFrame();
         mainFrame.setTitle("InsPicture - Picture Inspector");
         mainFrame.setIconImages(Vars.appIcons);
+
+        progressDialog = new ProgressDialog(mainFrame);
+        progressDialog.GetButton().addActionListener(e -> {
+            stop = true;
+        });
 
         mainFrame.setLayout(new GridBagLayout());
 
@@ -135,6 +142,7 @@ public class Application
 
         constraints.gridy = 1;
         constraints.anchor = GridBagConstraints.NORTH;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
         constraints.insets.bottom = 10;
         constraints.insets.top = 0;
         mainFrame.add(zoomRectSlider, constraints);
@@ -145,6 +153,7 @@ public class Application
 
         constraints.gridy = 2;
         constraints.anchor = GridBagConstraints.SOUTH;
+        constraints.fill = GridBagConstraints.NONE;
         constraints.insets.bottom = 5;
         constraints.insets.top = 10;
         mainFrame.add(zoomAmountSliderTitle, constraints);
@@ -188,6 +197,7 @@ public class Application
 
         constraints.gridy = 3;
         constraints.anchor = GridBagConstraints.NORTH;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
         constraints.insets.bottom = 10;
         constraints.insets.top = 0;
         mainFrame.add(zoomAmountSlider, constraints);
@@ -198,6 +208,7 @@ public class Application
 
         constraints.gridy = 4;
         constraints.anchor = GridBagConstraints.SOUTH;
+        constraints.fill = GridBagConstraints.NONE;
         constraints.insets.bottom = 5;
         constraints.insets.top = 10;
         mainFrame.add(labelsTitle, constraints);
@@ -430,20 +441,48 @@ public class Application
                         File unlabeledDir = new File(targetFile, "Unlabeled");
                         unlabeledDir.mkdirs();
 
-                        for (FileGroup fileGroup : files)
+                        new Thread(new Runnable()
                         {
-                            for (File file : fileGroup.GetFiles())
+                            @Override
+                            public void run()
                             {
-                                try
+                                int p = 0;
+                                for (FileGroup fileGroup : files)
                                 {
-                                    Files.copy(file.toPath(), new File(targetFile, (fileGroup.GetLabel() == null ? "Unlabeled" : fileGroup.GetLabel()) + Vars.fileSeparator + FilenameUtils.getName(file.toString())).toPath());
-                                } catch (Exception ignored)
-                                {
-                                }
-                            }
-                        }
+                                    if (stop)
+                                        break;
 
-                        JOptionPane.showMessageDialog(mainFrame, "Export finished.", "InsPicture - Finished", JOptionPane.INFORMATION_MESSAGE);
+                                    for (File file : fileGroup.GetFiles())
+                                    {
+                                        try
+                                        {
+                                            Files.copy(file.toPath(), new File(targetFile, (fileGroup.GetLabel() == null ? "Unlabeled" : fileGroup.GetLabel()) + Vars.fileSeparator + FilenameUtils.getName(file.toString())).toPath());
+                                        } catch (Exception ignored)
+                                        {
+                                        }
+                                    }
+
+                                    progressDialog.SetProgress((int) (((float) (p + 1) / (float) files.size()) * 100f));
+
+                                    p++;
+                                }
+
+                                progressDialog.setVisible(false);
+
+                                JOptionPane.showMessageDialog(mainFrame, stop ? "Export Cancelled." : "Export finished.", "InsPicture - Finished", JOptionPane.INFORMATION_MESSAGE);
+
+                                stop = false;
+                            }
+                        }).start();
+
+                        SwingUtilities.invokeLater(new Runnable()
+                        {
+                            @Override
+                            public void run()
+                            {
+                                progressDialog.setVisible(true);
+                            }
+                        });
                     }
                     else
                     {
